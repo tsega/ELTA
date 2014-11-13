@@ -37,3 +37,6 @@ xmlrpc.php
 
 # Ignore project folder
 .idea/
+
+# Ignore .sql file
+*.sql
