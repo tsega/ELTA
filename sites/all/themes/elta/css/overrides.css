@@ -12,3 +12,11 @@ html.overlay-open .navbar-fixed-top{z-index:400}html.js fieldset.collapsed{borde
 header.front-page-header{
   margin-bottom: 0px;
 }
+
+div.region section{
+    margin-bottom: 10px;
+}
+
+div#ad_groups_2 img{
+    width: 100%;
+}
