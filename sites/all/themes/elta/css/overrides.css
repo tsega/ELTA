@@ -33,3 +33,7 @@ div.form-item-quantity label{
 div.form-item-quantity label:after{
   content: ":";
 }
+
+h1.page-header{
+  margin-top: 0px;
+}
