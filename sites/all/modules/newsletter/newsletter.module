@@ -442,7 +442,8 @@ function newsletter_taxonomy_vocabulary_insert($vocabulary) {
   field_create_field($field);
 
   $instance = array(
-    'field_name' => 'field_' . $vocabulary->machine_name,
+    //'field_name' => 'field_' . $vocabulary->machine_name,
+    'field_name' => 'field_' . $field_name,
     'entity_type' => 'newsletter_template',
     'bundle' => 'newsletter_template',
     'label' => $vocabulary->name,
