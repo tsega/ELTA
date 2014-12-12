@@ -1,0 +1,191 @@
+<?php
+
+/**
+ * @file
+ * Multilingual poll - Aggregates poll results for all translations.
+ *
+ * Most code ripped off poll module and adapted for multilingual results.
+ */
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Rewrite the cancel vote form with the nid for the translation with the actual vote.
+ */
+function i18n_poll_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'poll_cancel_form') {
+    if (!empty($form['#nid']) && empty($form['#i18ntnid'])) {
+      // Replace nid with the original node the user voted
+      $node = node_load($form['#nid']);
+      if (!empty($node->tnid) && ($vote = i18n_poll_get_vote($node->tnid))) {
+        $form['#i18ntnid'] = $node->tnid;
+        $form['#nid'] = $vote->nid;
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_node_view().
+ *
+ * Replaces poll results with aggregated translations.
+ *
+ * We don't add all language results on loading to avoid the data being trashed
+ * when editing and saving nodes again.
+ */
+function i18n_poll_node_view($node, $view_mode, $langcode) {
+  if ($node->type == 'poll' && !empty($node->tnid)) {
+    // Replace results for node view
+    if (!empty($node->allowvotes) && empty($node->show_results)) {
+      $node->content['poll_view_voting'] = drupal_get_form('poll_view_voting', $node);
+    }
+    else {
+      $node->content['poll_view_results'] = array('#markup' => i18n_poll_view_results($node, $view_mode, FALSE));
+    }
+  }
+}
+
+/**
+ * Implements hook_node_load().
+ *
+ * We don't add all language results on loading to avoid the data being trashed
+ * when editing and saving nodes again.
+ */
+function i18n_poll_node_load($nodes, $types) {
+  // Check again whether or not this user is allowed to vote.
+  // User may have voted for any of the translations
+  foreach ($nodes as $node) {
+    if ($node->type == 'poll' && !empty($node->tnid)) {
+      if ($node->allowvotes) {
+        $result = i18n_poll_get_vote($node->tnid);
+        if (isset($result->chid)) {
+          $node->vote = $result->chid;
+          $node->allowvotes = FALSE;
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_block_info().
+ *
+ * Generates a block containing the latest poll with aggregated results.
+ */
+function i18n_poll_block_info() {
+  $blocks['most_recent'] = array(
+    'info' => t('Most recent poll (Aggregated translations)'),
+    'cache' => DRUPAL_NO_CACHE,
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function i18n_poll_block_view($delta = '') {
+  if (user_access('access content')) {
+    // Retrieve the latest poll.
+    $select = db_select('node', 'n');
+    $select->join('poll', 'p', 'p.nid = n.nid');
+    $select->fields('n', array('nid'))
+      ->condition('n.status', 1)
+      ->condition('p.active', 1)
+      ->orderBy('n.created', 'DESC')
+      ->range(0, 1)
+      ->addTag('node_access');
+
+    $record = $select->execute()->fetchObject();
+    if ($record) {
+      $poll = node_load($record->nid);
+      if ($poll->nid) {
+        $poll = i18n_poll_block_latest_poll_view($poll, 'full', TRUE);
+        $block['subject'] = t('Poll');
+        $block['content'] = $poll->content;
+        return $block;
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_view().
+ *
+ * @param $block
+ *   An extra parameter that adapts the hook to display a block-ready
+ *   rendering of the poll.
+ */
+function i18n_poll_block_latest_poll_view($node, $view_mode, $block = FALSE) {
+  global $user;
+  $output = '';
+
+  // This is necessary for shared objects because PHP doesn't copy objects, but
+  // passes them by reference.  So when the objects are cached it can result in
+  // the wrong output being displayed on subsequent calls.  The cloning and
+  // unsetting of $node->content prevents the block output from being the same
+  // as the node output.
+  $node = clone $node;
+  unset($node->content);
+
+  // No 'read more' link.
+  $node->readmore = FALSE;
+  $node->teaser = '';
+
+  $links = array();
+  $links[] = array('title' => t('Older polls'), 'href' => 'poll', 'attributes' => array('title' => t('View the list of polls on this site.')));
+  if ($node->allowvotes) {
+    $links[] = array('title' => t('Results'), 'href' => 'node/' . $node->nid . '/results', 'attributes' => array('title' => t('View the current poll results.')));
+  }
+
+  $node->links = $links;
+
+  if (!empty($node->allowvotes)) {
+    $node->content['poll_view_voting'] = drupal_get_form('poll_view_voting', $node, TRUE);
+    $node->content['links'] = array(
+      '#theme' => 'links',
+      '#links' => $node->links,
+      '#weight' => 5,
+    );
+  }
+  else {
+    $node->content['poll_view_results'] = array('#markup' => i18n_poll_view_results($node, TRUE, TRUE));
+  }
+
+  return $node;
+}
+
+/**
+ * Generates a graphical representation of the results of a poll.
+ */
+function i18n_poll_view_results(&$node, $view_mode, $block) {
+  // Load the appropriate choices into the $poll object.
+  $result = db_query("SELECT c.chid, SUM(c.chvotes) AS votes FROM {poll_choice} c INNER JOIN {node} n ON c.nid = n.nid WHERE n.tnid = :tnid AND n.nid != :nid GROUP BY c.chid", array('tnid' => $node->tnid, 'nid' => $node->nid));
+  $choices = array_values($node->choice);
+  foreach ($result as $i => $choice) {
+    // If this option not set for the source node, do not show.
+    if (!empty($choices[$i])) {
+      $choices[$i]['chvotes'] += $choice->votes;
+    }
+  }
+  $node->choice = $choices;
+  return poll_view_results($node, $view_mode, $block);
+}
+
+/**
+ * Get user vote for this node or its translations.
+ *
+ * Returns object with nid, chid. Has static caching as this will typically be called twice.
+ */
+function i18n_poll_get_vote($tnid) {
+  global $user;
+  static $vote = array();
+  if (!array_key_exists($tnid, $vote)) {
+    if ($user->uid) {
+      $vote[$tnid] = db_query('SELECT v.nid, v.chid FROM {poll_vote} v INNER JOIN {node} n ON n.nid = v.nid WHERE n.tnid = :tnid AND v.uid = :uid', array('tnid' => $tnid, 'uid' => $user->uid))->fetchObject();
+    }
+    else {
+      $vote[$tnid] = db_query("SELECT v.nid, v.chid FROM {poll_vote} v INNER JOIN {node} n ON n.nid = v.nid WHERE n.tnid = :tnid AND v.hostname = :hostname", array('tnid' => $tnid, 'hostname' => ip_address()))->fetchObject();
+    }
+  }
+  return $vote[$tnid];
+}
