@@ -35,6 +35,35 @@ body div#toolbar.toolbar {
   right: 0;
   width: auto;
 }
+
+@font-face {
+    font-family: 'DroidSansEthiopic';
+    src: url('fonts/droidsansethiopic-regular-webfont.eot');
+    src: url('fonts/droidsansethiopic-regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('fonts/droidsansethiopic-regular-webfont.woff2') format('woff2'),
+         url('fonts/droidsansethiopic-regular-webfont.woff') format('woff'),
+         url('fonts/droidsansethiopic-regular-webfont.ttf') format('truetype'),
+         url('fonts/droidsansethiopic-regular-webfont.svg#droid_sans_ethiopicregular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body.i18n-am,
+body.i18n-am #admin-menu-wrapper,
+body.i18n-am h1,
+body.i18n-am h2,
+body.i18n-am h3,
+body.i18n-am h4,
+body.i18n-am h5,
+body.i18n-am h6,
+#drupalchat {
+  font-family: "DroidSansEthiopic" !important;
+}
+
+body.i18n-am #admin-menu-wrapper{
+  font-size: 1em;
+}
+
 #admin-menu-wrapper {
   font-size: .846em;
   padding: 5px 10px 0;
