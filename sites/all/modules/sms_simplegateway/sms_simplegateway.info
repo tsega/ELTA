@@ -1,0 +1,15 @@
+name = "Simple gateway"
+description = "Gateway: Configurable module for quick & easy integration to unknown gateway providers"
+package = SMS Framework
+core = 7.x
+dependencies[] = sms
+
+files[] = sms_simplegateway.module
+ 
+
+; Information added by drupal.org packaging script on 2013-10-01
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "sms_simplegateway"
+datestamp = "1380628959"
+
