@@ -3754,12 +3754,12 @@ div.b-search-form{
 	width: 150px;
 }
 
-#drupalchat ul li a.chatboxhead {
-	width: 239px;
-}
+/*#drupalchat ul li a.chatboxhead {*/
+	/*width: 239px;*/
+/*}*/
 
 #drupalchat ul li a.chat {
-	width: 200px;
+	/*width: 200px;*/
 	border-right: 1px solid #b5b5b5;
 }
 
@@ -3914,4 +3914,19 @@ html[xmlns] .header #menu-1121-1 .sf-megamenu > li ol {
 .header #menu-1121-1 li.sf-megamenu-column,
 .header #menu-1121-1 li.sf-megamenu-column:hover{
 	border-bottom: 0px !important;
+}
+
+div.view-news-tags li.views-row{
+	margin:  0 0 0 0;
+	padding:  0 0 0 0;
+	list-style: none;
+	display: inline-block;
+}
+
+div.content-featured span.field-content a{
+	color: #efefef;
+}
+div.content-featured span.field-content i a:hover{
+	border-bottom: dotted 1px #efefef;
+	color: #4874cd;
 }

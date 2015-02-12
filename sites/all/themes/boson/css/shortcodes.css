@@ -4153,7 +4153,7 @@ input::-moz-placeholder, textarea::-moz-placeholder {
 
 	position: fixed;
 	bottom: 30px;
-	right: 30px;
+	left: 30px;
 
 	background-color: rgba(52,56,59,0.8);
 	border-radius: 2px;
