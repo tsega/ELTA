@@ -40,3 +40,7 @@ xmlrpc.php
 
 # Ignore .sql file
 *.sql
+
+# Ignore documentation folders
+developer/
+docs/

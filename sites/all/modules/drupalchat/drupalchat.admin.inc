@@ -378,7 +378,7 @@ function drupalchat_settings_form($form, &$form_state) {
     '#title' => t('Chat List Latency'),
     '#description' => t('The delay, in seconds, after which the user will be shown offline in the chat list(i.e. removed from the chat list) from the time he/she goes offline. Increase this value if you find the chat list is unstable and keeps on changing a lot (for example - when a user navigates from one page to another he/she goes offline and then comes back online again). Decrease it if you find that the users are shown in the chat list for too long after they have left your website.'),
   	'#options' => $seconds,
-    '#default_value' => variable_get('drupalchat_user_latency', 20),
+    '#default_value' => variable_get('drupalchat_user_latency', 30),
   );
   $form['drupalchat_general_settings']['drupalchat_refresh_rate'] = array(
     '#type' => 'select',
@@ -480,7 +480,7 @@ function drupalchat_settings_form_validate($form, &$form_state) {
       'chat_list_header' => $form_state['values']['drupalchat_chat_list_header'],
       'public_chatroom_header' => $form_state['values']['drupalchat_public_chatroom_header'],
       'rel' => $form_state['values']['drupalchat_rel'],
-      'version' => '7.x-1.3',
+      'version' => '7.x-1.4',
       'show_admin_list' => $form_state['values']['drupalchat_show_admin_list'],
       'clear' => $form_state['values']['drupalchat_allow_single_message_delete'],
       'delmessage' => $form_state['values']['drupalchat_allow_clear_room_history'],

@@ -280,20 +280,28 @@ function drupalchatMain() {
       ":bz":   [ "115.gif",         "bee"                                         ],
       ":ar!":  [ "pirate.gif",      "pirate"                                      ],
       "[..]":  [ "transformer.gif", "transformer"                                 ]
-    }
+    },
+    open_chat_uids: {},
+    current_open_chat_window_ids: {}
   };
+  window.drupalchat = drupalchat;
   //(function ($) {
 
   jQuery(document).ready(function(){
 
-    drupalchat.open_chat_uids = {};
-
     if(Drupal.drupalchat.Cookie.read('drupalchat_open_chat_uids') !== null) {
       var temp_open_chat_uids = [];
-      ;
       temp_open_chat_uids = Drupal.drupalchat.Cookie.read('drupalchat_open_chat_uids').split(",");
       for(var e in temp_open_chat_uids) {
         drupalchat.open_chat_uids[temp_open_chat_uids[e]] = temp_open_chat_uids[e];
+      }
+    }
+    
+    if(Drupal.drupalchat.Cookie.read('drupalchat_current_open_chat_window_ids') !== null) {
+      var temp_open_chat_window_uids = [];
+      temp_open_chat_window_uids = Drupal.drupalchat.Cookie.read('drupalchat_current_open_chat_window_ids').split(",");
+      for(var e in temp_open_chat_window_uids) {
+        drupalchat.current_open_chat_window_ids[temp_open_chat_window_uids[e]] = temp_open_chat_window_uids[e];
       }
     }
     
@@ -359,6 +367,10 @@ function drupalchatMain() {
   		jQuery(this).parent().hide(); //hide subpanel
   	    //jQuery("#drupalchat li a").removeClass('active'); //remove active class on subpanel trigger
   		jQuery(this).parent().parent().children('a').removeClass('active');
+      var id = jQuery(this).parent().parent().attr('id').split('_')[1];
+      if(jQuery('#chatbox_'+id).is(':visible')) {
+        updateLocalChatWindowList(jQuery(this).parent().parent().attr('id').split('_')[1], 'min');
+      }
   	});	
   	jQuery('#drupalchat .subpanel .subpanel_title span.options').live('click', function() { //Click anywhere and...
   		var offset = jQuery(this).offset();
@@ -393,12 +405,12 @@ function drupalchatMain() {
   //	    e.stopPropagation(); //Prevents the subpanel ul from closing on click
   	});
 
-  	jQuery("#chatpanel .subpanel li:not(.link) a").live('click', function() {
+  	jQuery("#chatpanel .subpanel li:not(.link) a").live('click', function(e) {
         chatWith(jQuery(this).attr("class"), jQuery(this).text());
   			return false;
   	});	
   	
-  	jQuery(".chatbox .subpanel_title span:not(.min)").live('click', function () {
+  	jQuery(".chatbox .subpanel_title span:not(.min)").live('click', function (e) {
       closeChatBox(jQuery(this).attr('class'));
   	});
   	//alert(Drupal.settings.drupalchat.status);
@@ -442,6 +454,9 @@ function drupalchatMain() {
       jQuery(this).css("overflow-y","hidden");
   	//document.body.style.overflow='auto';
     });
+    
+    //Get thread history
+    getThreadHistory();
   });
 
 
@@ -449,22 +464,23 @@ function drupalchatMain() {
       createChatBox(chatboxtitle, chatboxname);
       jQuery("#chatbox_"+chatboxtitle+" a:first").click(); //Toggle the subpanel to make active
       jQuery("#chatbox_"+chatboxtitle+" .chatboxtextarea").focus();
+      updateLocalChatWindowList(chatboxtitle, 'open');
+      
   }
 
 
   function createChatBox(chatboxtitle, chatboxname, chatboxblink) {
-    drupalchat.open_chat_uids[chatboxtitle] = chatboxtitle;
-    var temp_open_chat_uids = [];
-    for(var e in drupalchat.open_chat_uids) {
-      temp_open_chat_uids.push(chatboxtitle);
-    }
-    Drupal.drupalchat.Cookie.create('drupalchat_open_chat_uids', temp_open_chat_uids.join(","));
+    
       if (jQuery("#chatbox_"+chatboxtitle).length > 0) {
           if (jQuery("#chatbox_"+chatboxtitle).css('display') == 'none') {
               jQuery("#chatbox_"+chatboxtitle).css('display', 'block');
           }
           jQuery("#chatbox_"+chatboxtitle+" .chatboxtextarea").focus();
+          updateLocalChatWindowList(chatboxtitle, 'open');
           return;
+      }
+      else {
+        updateLocalChatWindowList(chatboxtitle, 'min');
       }
 
       jQuery(" <li />" ).attr("id","chatbox_"+chatboxtitle)
@@ -486,6 +502,7 @@ function drupalchatMain() {
       jQuery("#chatbox_"+chatboxtitle).click(function() {
           if (jQuery('#chatbox_'+chatboxtitle+' .chatboxcontent').css('display') != 'none') {
               jQuery("#chatbox_"+chatboxtitle+" .chatboxtextarea").focus();
+              updateLocalChatWindowList(chatboxtitle, 'open');
           }
       });
       jQuery("#chatbox_"+chatboxtitle).show();
@@ -522,7 +539,7 @@ function drupalchatMain() {
       }
   }
 
-  function processChatData(data) {
+  function processChatData(data, history) {
       var drupalchat_messages = data;
   	//var drupalchat_messages = jQuery.getJSON(data);
           if((!drupalchat_messages.status || drupalchat_messages.status == 0)) {
@@ -589,11 +606,18 @@ function drupalchatMain() {
   				if (minutes < 10) {
   					minutes = "0" + minutes;
   				}
-                  var output = '<div class="chatboxusername">';				
+          
+          var formattedCurrentTime = hours+':'+minutes;
+          
+          if((typeof(history) === 'boolean') && history) {
+            formattedCurrentTime = value.timestamp;
+          }
+          
+          var output = '<div class="chatboxusername">';				
   				if(Drupal.settings.drupalchat.iup == "1") {
   				  output = output + '<div class="chatboxuserpicture"><img height="20" width="20" src="'+value.p+'" /></div>';
   				}
-  				output = output + '<span class="chatboxtime">'+hours+':'+minutes+'</span><a href="'+Drupal.settings.basePath+'user/'+value.uid1+'">'+value.name+'</a></div><p class="' + value.message_id + '">'+value.message+'</p>';
+  				output = output + '<span class="chatboxtime">'+formattedCurrentTime+'</span><a href="'+Drupal.settings.basePath+'user/'+value.uid1+'">'+value.name+'</a></div><p class="' + value.message_id + '">'+value.message+'</p>';
   				jQuery("#chatbox_"+chatboxtitle+" .chatboxcontent").append(output);
   			}
   			jQuery("#chatbox_"+chatboxtitle+" .chatboxcontent").scrollTop(jQuery("#chatbox_"+chatboxtitle+" .chatboxcontent")[0].scrollHeight);
@@ -607,33 +631,35 @@ function drupalchatMain() {
   	  jQuery('li[id^="chatbox_"]').each(function(){
   	    Drupal.drupalchat.changeStatus(this.id,0);
   	  });
-  	  jQuery.each(drupalchat_messages.buddylist, function(key, value) {
-  		  if (key != 'total') {
-  			  if (key != Drupal.settings.drupalchat.uid) {
-  			    var output = '<li class="status-' + value.status + '">';
-  				if(Drupal.settings.drupalchat.iup == "1") {
-  				  output = output + '<img style="margin:0px 8px 0px 3px;padding:2px;float:left;height:24px;width:24px;" src="'+value.p+'">';
-  				}
-  				output = output + '<a class="' + key + '" href="#">' + value.name + '</a></li>';
-  			  	jQuery('#chatpanel .subpanel ul').append(output);
-  			    Drupal.drupalchat.changeStatus('chatbox_'+key,1);
-  			  }
-  		  }
-  		  else {
-  			  jQuery('#chatpanel .online-count').html(value);
-  			  if(value == 0) {
-  			    jQuery('#chatpanel .subpanel ul').append(Drupal.settings.drupalchat.noUsers);
-  			  }
-  		  }
-  		});
-  	  jQuery('#chatpanel .subpanel ul li:last-child').addClass('last');
+  	  if(typeof(drupalchat_messages.buddylist)!=="undefined") {
+        jQuery.each(drupalchat_messages.buddylist, function(key, value) {
+          if (key != 'total') {
+            if (key != Drupal.settings.drupalchat.uid) {
+              var output = '<li class="status-' + value.status + '">';
+            if(Drupal.settings.drupalchat.iup == "1") {
+              output = output + '<img style="margin:0px 8px 0px 3px;padding:2px;float:left;height:24px;width:24px;" src="'+value.p+'">';
+            }
+            output = output + '<a class="' + key + '" href="#">' + value.name + '</a></li>';
+              jQuery('#chatpanel .subpanel ul').append(output);
+              Drupal.drupalchat.changeStatus('chatbox_'+key,1);
+            }
+          }
+          else {
+            jQuery('#chatpanel .online-count').html(value);
+            if(value == 0) {
+              jQuery('#chatpanel .subpanel ul').append(Drupal.settings.drupalchat.noUsers);
+            }
+          }
+        });
+        jQuery('#chatpanel .subpanel ul li:last-child').addClass('last');
   	  
-  	  /*if (jQuery('#chatpanel .subpanel ul li').length <= 0) {
-  	  	jQuery('#chatpanel .subpanel ul').append(Drupal.settings.drupalchat.noUsers);
-  	  }*/
-  	  
-  	  //Update Timestamp.
-  	  drupalchat.last_timestamp = drupalchat_messages.last_timestamp;  
+        /*if (jQuery('#chatpanel .subpanel ul li').length <= 0) {
+          jQuery('#chatpanel .subpanel ul').append(Drupal.settings.drupalchat.noUsers);
+        }*/
+        
+        //Update Timestamp.
+        drupalchat.last_timestamp = drupalchat_messages.last_timestamp;
+      }        
   	}
   	//if (Drupal.settings.drupalchat.polling_method != '0') {
   		chatPoll();
@@ -641,8 +667,62 @@ function drupalchatMain() {
   }
 
   function closeChatBox(chatboxtitle) {
-    delete drupalchat.open_chat_uids[chatboxtitle];
+    updateLocalChatWindowList(chatboxtitle, 'close');
   	jQuery('#chatbox_'+chatboxtitle).css('display','none');
+  }
+  
+  function updateLocalChatWindowList(chatboxtitle, state) {
+    if(state === 'min') {
+      drupalchat.open_chat_uids[chatboxtitle] = chatboxtitle;
+      delete drupalchat.current_open_chat_window_ids[chatboxtitle];
+    }
+    else if(state === 'open') {
+      drupalchat.open_chat_uids[chatboxtitle] = chatboxtitle;
+      drupalchat.current_open_chat_window_ids[chatboxtitle] = chatboxtitle;
+    }
+    else {
+      delete drupalchat.open_chat_uids[chatboxtitle];
+      delete drupalchat.current_open_chat_window_ids[chatboxtitle];
+    }
+    var temp_open_chat_uids = [];
+    for(var e in drupalchat.open_chat_uids) {
+      temp_open_chat_uids.push(drupalchat.open_chat_uids[e]);
+    }
+    if(temp_open_chat_uids.join(",")!=='') {
+      Drupal.drupalchat.Cookie.create('drupalchat_open_chat_uids', temp_open_chat_uids.join(","));
+    }
+    else {
+      Drupal.drupalchat.Cookie.delete('drupalchat_open_chat_uids');
+    }
+    
+    var temp_open_chat_window_uids = [];
+    for(var e in drupalchat.current_open_chat_window_ids) {
+      temp_open_chat_window_uids.push(drupalchat.current_open_chat_window_ids[e]);
+    }
+    if(temp_open_chat_window_uids.join(",")!=='') {
+      Drupal.drupalchat.Cookie.create('drupalchat_current_open_chat_window_ids', temp_open_chat_window_uids.join(","));
+    }
+    else {
+      Drupal.drupalchat.Cookie.delete('drupalchat_current_open_chat_window_ids');
+    }
+  }
+  
+  function getThreadHistory() {
+    var temp_open_chat_uids = [];
+    for(var e in drupalchat.open_chat_uids) {
+      temp_open_chat_uids.push(drupalchat.open_chat_uids[e]);
+    }
+    
+    jQuery.post(Drupal.settings.drupalchat.threadHistoryUrl, { drupalchat_open_chat_uids: temp_open_chat_uids.join(",") }, function(data) {
+      var temp_open_ids = {};
+      for(var i in drupalchat.current_open_chat_window_ids) {
+        temp_open_ids[i] = drupalchat.current_open_chat_window_ids[i];
+      }
+      processChatData(data, true);
+      for(var i in temp_open_ids) {
+        chatWith(temp_open_ids[i], '');
+      }
+    });
   }
 
   Drupal.drupalchat.Cookie = {};
@@ -663,8 +743,8 @@ function drupalchatMain() {
       date.setTime(date.getTime()+(30*24*60*60*1000));
       expires = "; expires="+date.toGMTString();
     }
-    if((typeof(iflychat)!=="undefined") && (typeof(iflychat.settings)!=="undefined") && (typeof(iflychat.settings.domain)!=="undefined")) {
-      t_domain = "; domain=."+iflychat.settings.domain;
+    if((typeof(domain)!=="undefined")) {
+      t_domain = "; domain=."+domain;
     }
     document.cookie = name+"="+value+expires+t_domain+"; path=/";
   };
@@ -691,6 +771,8 @@ function drupalchatMain() {
   Drupal.drupalchat.Cookie.delete = function (name) {
     Drupal.drupalchat.Cookie.create(name,"",-1);
   };
+  
+  
   //})(jQuery);
 
 }

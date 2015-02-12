@@ -335,6 +335,11 @@ function drupalchat_menu() {
     'access arguments' => array('access drupalchat'),
     'type' => MENU_CALLBACK,
   );
+  $items['drupalchat/thread-history'] = array(
+		'page callback' => 'drupalchat_get_thread_history',
+		'access arguments' => array('access drupalchat'),
+		'type' => MENU_CALLBACK,
+	);
   
   return $items;
 }
@@ -530,6 +535,7 @@ function drupalchat_init() {
     if($polling_method != DRUPALCHAT_COMMERCIAL) {
       $my_settings['username'] = ($user->uid)?$user_name:$a_name;
       $my_settings['uid'] = ($user->uid)?$user->uid:'0-'._drupalchat_get_sid();
+      $my_settings['threadHistoryUrl'] = url('drupalchat/thread-history', array('absolute' => TRUE));
     }
 	$my_settings['iup'] = variable_get('drupalchat_user_picture', 1);
 	if(variable_get('drupalchat_user_picture', 1) == 1) {
@@ -1498,4 +1504,77 @@ function _drupalchat_get_groups($uid) {
   drupal_alter('drupalchat_get_groups', $groups, $uid);
   
   return $groups;
+}
+
+function drupalchat_get_thread_history() {
+  global $user;
+  $json = array();
+  if(isset($_POST['drupalchat_open_chat_uids'])) {
+    $chat_ids = explode(',', check_plain($_POST['drupalchat_open_chat_uids']));
+    
+    $json['messages'] = array();
+    foreach($chat_ids as $chat_id) {
+      $messages = '';
+      
+      if($user->uid > 0) {
+        $current_uid = $user->uid;
+      }
+      else {
+        $current_uid = '0-'._drupalchat_get_sid();
+      }
+      
+      if($chat_id == 'c-0') {
+        $messages = db_query('SELECT m.message_id, m.uid1, m.uid2, m.message, m.timestamp FROM {drupalchat_msg} m WHERE m.uid2 = \'c-0\' ORDER BY m.timestamp DESC LIMIT 30', array(':uid1' => $current_uid, ':uid2' => $chat_id))->fetchAll();
+      }
+      else {
+        $messages = db_query('SELECT m.message_id, m.uid1, m.uid2, m.message, m.timestamp FROM {drupalchat_msg} m WHERE (m.uid2 = :uid2 AND m.uid1 = :uid1) OR (m.uid2 = :uid1 AND m.uid1 = :uid2) ORDER BY m.timestamp DESC LIMIT 30', array(':uid1' => $current_uid, ':uid2' => $chat_id))->fetchAll();
+      }
+        
+      foreach ($messages as $message) {
+      //print_r($message);
+        if((((!strpos($message->uid1,'-')) && ($message->uid1 != $user->uid)) || ((strpos($message->uid1,'-')) && ($message->uid1 != '0-'._drupalchat_get_sid()))) || ($message->uid2 == 'c-0')) {
+          if(!strpos($message->uid1,'-')) {
+            $account = user_load($message->uid1);
+          $temp_msg = array('message' => check_plain($message->message), 'timestamp' => date("H:i", $message->timestamp), 'uid1' => $message->uid1, 'name' => check_plain(format_username($account)), 'uid2' => $message->uid2, 'message_id' => check_plain($message->message_id),);
+          if(variable_get('drupalchat_user_picture', 1) == 1) {
+          $temp_msg['p'] = drupalchat_return_pic_url_any_user($account);
+          }
+          $json['messages'][] = $temp_msg;
+          }
+          else {
+            $arr = explode("-", $message->uid1, 2);
+          $sid = $arr[1];
+            $name = db_query('SELECT name FROM {drupalchat_users} WHERE uid = :uid AND session = :sid', array(':uid' => '0', ':sid' => $sid))->fetchField();
+            $temp_msg = array('message' => check_plain($message->message), 'timestamp' => date("H:i", $message->timestamp), 'uid1' => $message->uid1, 'name' => $name, 'uid2' => $message->uid2, 'message_id' => check_plain($message->message_id),);
+          if(variable_get('drupalchat_user_picture', 1) == 1) {
+          $temp_msg['p'] = drupalchat_return_pic_url_any_user(user_load('0'));
+          }
+          $json['messages'][] = $temp_msg;
+          }
+        }
+        else {
+          if(!strpos($message->uid2,'-')) {
+            $account = user_load($message->uid2);
+          $temp_msg = array('message' => check_plain($message->message), 'timestamp' => date("H:i", $message->timestamp), 'uid1' => $message->uid1, 'name' => check_plain(format_username($account)), 'uid2' => $message->uid2, 'message_id' => check_plain($message->message_id),);
+          if(variable_get('drupalchat_user_picture', 1) == 1) {
+          $temp_msg['p'] = drupalchat_return_pic_url_any_user($account);
+          }
+          $json['messages'][] = $temp_msg;
+          }
+          else {
+            $arr = explode("-", $message->uid2, 2);
+          $sid = $arr[1];
+            $name = db_query('SELECT name FROM {drupalchat_users} WHERE uid = :uid AND session = :sid', array(':uid' => '0', ':sid' => $sid))->fetchField();
+            $temp_msg = array('message' => check_plain($message->message), 'timestamp' => date("H:i", $message->timestamp), 'uid1' => $message->uid1, 'name' => $name, 'uid2' => $message->uid2, 'message_id' => check_plain($message->message_id),);
+          if(variable_get('drupalchat_user_picture', 1) == 1) {
+          $temp_msg['p'] = drupalchat_return_pic_url_any_user(user_load('0'));
+          }
+          $json['messages'][] = $temp_msg;
+          }
+        }
+      }
+    }
+    $json['messages'] = array_reverse($json['messages']);
+  }
+  drupal_json_output($json);
 }
