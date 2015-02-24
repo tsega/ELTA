@@ -32,7 +32,27 @@ else {
 	<!-- END TOP BAR 
 	============================================= -->
 
-	<!-- HEADER 
+	<!-- SITE HEADER
+	============================================= -->
+	<div class="site-header clearfix">
+		<div>
+			<!-- Logo -->
+			<?php if ($logo): ?>
+				<a href="<?php print $front_page; ?>"><img src="<?php print $logo; ?>" alt="<?php print t('Home'); ?>" /></a>
+			<?php endif; ?>
+		</div><!-- brand -->
+
+		<div id="site-heading">
+			<h1>የኢትዮጵያ ቁም እንስሳት ነጋዴዎች ማህበር</h1>
+			<h1>Ethiopian Livestock Traders Association</h1>
+		</div>
+
+		<div>&nbsp;</div>
+	</div>
+	<!-- END SITE HEADER
+	============================================= -->
+
+	<!-- HEADER
 	============================================= -->
 	<div class="header">
 		<div class="layout clearfix">
@@ -40,11 +60,7 @@ else {
 
 				<div class="brand">
 					<!-- Logo -->
-					<?php if ($logo): ?>
-						<div class="logo-img">
-							<a href="<?php print $front_page; ?>"><img src="<?php print $logo; ?>" alt="<?php print t('Home'); ?>" /></a>
-						</div>
-					<?php endif; ?>
+
 
 				</div><!-- brand -->
 
@@ -68,13 +84,40 @@ else {
 
 
 	</div>
-	<!-- END HEADER 
+	<!-- END HEADER
 	============================================= -->
 
 	<!--  SLIDER
 	============================================= -->
 	<div class="slider clearfix">
 		<?php if ($page['slider']): ?><?php print render($page   ['slider']); ?><?php endif; ?>
+		<?php if($is_front): ?>
+			<div class="banner">
+				<ul>
+					<li class="first">
+						<div class="text-container">
+							<h3 class="centered semibold uppercase">Ethiopian Livestock Traders Association</h3>
+							<p>ELTA works towards the creation of a number one Livestock Association in Ethiopia with an international standard of excellence able to compete and succeed in the global livestock trade industry.</p>
+							<a href="#" class="btn big blue">More <i class="icon-chevron-sign-right"></i></a>
+						</div>
+					</li>
+					<li class="second">
+						<div class="text-container">
+							<h3 class="centered semibold uppercase">Become a Member</h3>
+							<p>ELTA works towards the creation of a number one Livestock Association in Ethiopia with an international standard of excellence able to compete and succeed in the global livestock trade industry.</p>
+							<a href="/user/register" class="btn big blue">Register <i class="icon-chevron-sign-right"></i></a>
+						</div>
+					</li>
+					<li class="third">
+						<div class="text-container">
+							<h3 class="centered semibold uppercase">Discover New Opportunities</h3>
+							<p>ELTA works towards the creation of a number one Livestock Association in Ethiopia with an international standard of excellence able to compete and succeed in the global livestock trade industry.</p>
+							<a href="#" class="btn big blue">Connect <i class="icon-chevron-sign-right"></i></a>
+						</div>
+					</li>
+				</ul>
+			</div>
+		<?php endif; ?>
 	</div>
 	<!-- END SLIDER
 	============================================= -->
@@ -87,7 +130,6 @@ else {
 		<div class="content-featured">
 			<div class="layout">
 				<?php print render($page['featured']); ?>
-
 			</div>
 		</div>
 
@@ -266,7 +308,7 @@ else {
 				</div>
 
 				<div class="b-copyright">
-					<div class="layout">
+					<div class="layout clearfix">
 						<div class="f-a">
 							<?php if ($page['footer-a']): ?>
 								<?php print render($page['footer-a']); ?>

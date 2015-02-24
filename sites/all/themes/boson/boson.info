@@ -16,6 +16,7 @@ stylesheets[all][] = 'css/settings.css'
 ;stylesheets[all][] = 'css/color-scheme/turquoise.css'
 
 scripts[] = js/jquery.prettyPhoto.js
+scripts[] = js/unslider.min.js
 scripts[] = js/main.js
 
 
