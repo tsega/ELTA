@@ -3798,6 +3798,7 @@ html[xmlns] .view-product-catalog, html[xmlns] .view-news .media {
 	width: 220px;
 	margin-left: 20px;
 	margin-bottom: 20px;
+	padding-bottom: 20px;
 }
 
 .view-news .media .pull-left{
@@ -4315,4 +4316,48 @@ p.download i{
 .faq-item .views-field-title a{
 	font-size: 1.5em;
 	font-weight: bold;
+}
+
+.view-recent-products .views-row, .view-recent-members .views-row {
+	display: inline-block;
+	vertical-align: top;
+	text-align: left;
+	font-size: 13px;
+	letter-spacing: normal;
+	word-spacing: normal;
+}
+
+.view-recent-products .views-row:nth-child(2), .view-recent-members .views-row:nth-child(2){
+	margin: 0 10px;
+}
+
+.view-recent-products .views-row .views-field-title, .view-recent-members .views-row .views-field-title{
+	margin: 10px 0 6px;
+	text-align: center;
+	font: 14px 'OpenSansSemiboldRegular';
+}
+
+#block-system-user-menu .fa.fa-shopping-cart.active-trail.active::before{
+	background-color: transparent;
+}
+
+#views-form-commerce-cart-form-default table{
+	width: 100%;
+	margin-bottom: 30px;
+}
+
+#views-form-commerce-cart-form-default table td{
+	padding: 10px 5px;
+}
+
+.view-id-members .views-field-name{
+	text-align: center;
+}
+
+form div.form-item-quantity{
+	display: inline-block;
+}
+
+form div.form-item-quantity input[type="text"]{
+	width: 75px;
 }

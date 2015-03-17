@@ -2,6 +2,9 @@
 
 	$(document).ready( function() {
 
+		$("#block-views-recent-products-block h2.block-title, #block-views-recent-members-block h2.block-title").addClass("lined");
+		$(".view-id-members .view-content").addClass("clearfix");
+
 		// slider
 		$('.banner').unslider({
 			keys: true,
