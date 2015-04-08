@@ -37,3 +37,7 @@ div.form-item-quantity label:after{
 h1.page-header{
   margin-top: 0px;
 }
+
+.menu li.with-sub:hover::before, .menu > li::before, .menu a.active::before{
+    background-color: transparent !important;
+}
