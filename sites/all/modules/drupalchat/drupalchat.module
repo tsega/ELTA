@@ -658,12 +658,18 @@ function drupalchat_init() {
         $json = _drupalchat_get_auth(($user->uid)?$user_name:$a_name);
 		if($json) {
 		  $my_settings['session_key'] = $json['key'];
+      $my_settings['username'] = ($user->uid)?$user_name:$a_name;
+      $my_settings['uid'] = ($user->uid)?$user->uid:'0-'._drupalchat_get_sid();
+      if(variable_get('drupalchat_user_picture', 1) == 1) {
+        $my_settings['up'] = drupalchat_return_pic_url();
+      }
+      $my_settings['upl'] = drupalchat_return_profile_url();
 		  global $is_https;
 		  drupal_add_js(array('drupalchat' => $my_settings), array('type' => 'setting',));
-		  drupal_add_css((($is_https)?(DRUPALCHAT_EXTERNAL_A_HOST . ':' . DRUPALCHAT_EXTERNAL_A_PORT):(DRUPALCHAT_EXTERNAL_HOST . ':' . DRUPALCHAT_EXTERNAL_PORT)) .  '/i/' . $json['css'] . '/cache.css', array('type' => 'external',));
-		  drupal_add_js((($is_https)?(DRUPALCHAT_EXTERNAL_A_HOST . ':' . DRUPALCHAT_EXTERNAL_A_PORT):(DRUPALCHAT_EXTERNAL_HOST . ':' . DRUPALCHAT_EXTERNAL_PORT)) .  '/j/cache.js', array('type' => 'external',));
-		  drupal_add_js((($is_https)?(DRUPALCHAT_EXTERNAL_A_HOST . ':' . DRUPALCHAT_EXTERNAL_A_PORT):(DRUPALCHAT_EXTERNAL_HOST . ':' . DRUPALCHAT_EXTERNAL_PORT)) .  '/h/' . $json['css'] . '/cache.js', array('type' => 'external', 'scope' => 'footer'));
-		  
+      drupal_add_css('//cdn.iflychat.com/css/iflychat-' . $theme . '.css', array('type' => 'external', 'scope' => 'footer'));
+		  drupal_add_css((($is_https)?(DRUPALCHAT_EXTERNAL_A_HOST . ':' . DRUPALCHAT_EXTERNAL_A_PORT):(DRUPALCHAT_EXTERNAL_HOST . ':' . DRUPALCHAT_EXTERNAL_PORT)) .  '/i/' . $json['css'] . '/settings/no.cache.css', array('type' => 'external', 'scope' => 'footer'));
+		  drupal_add_js((($is_https)?(DRUPALCHAT_EXTERNAL_A_HOST . ':' . DRUPALCHAT_EXTERNAL_A_PORT):(DRUPALCHAT_EXTERNAL_HOST . ':' . DRUPALCHAT_EXTERNAL_PORT)) .  '/h/' . $json['css'] . '/settings/no.cache.js', array('type' => 'external',));
+      drupal_add_js('//cdn.iflychat.com/js/iflychat.min.js', array('type' => 'external', 'scope' => 'footer'));
 		}
 	  }
 	} else {
@@ -1255,7 +1261,10 @@ function _drupalchat_get_auth($name) {
 	'validState' => array('available','offline','busy','idle'),
 	'rel' => variable_get('drupalchat_rel', DRUPALCHAT_REL_AUTH),
   );
-  
+  //Added allRoles if role is admin.
+  if($role=='admin'){
+        $data['allRoles'] = user_roles();
+  }
   if(variable_get('drupalchat_user_picture', 1) == 1) {
     $data['up'] = drupalchat_return_pic_url();
   }

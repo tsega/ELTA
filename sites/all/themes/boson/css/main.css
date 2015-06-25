@@ -4011,8 +4011,8 @@ div.content-featured span.field-content i a:hover{
 	padding: 20px;
 	width: 40%;
 	position: relative;
-	top: 40px;
-	left: 75px;
+    top: 190px;
+    left: 600px;
 	color: #001020;
 }
 
@@ -4021,8 +4021,8 @@ div.content-featured span.field-content i a:hover{
 	padding: 20px;
 	width: 40%;
 	position: relative;
-	top: 140px;
-	left: 400px;
+    top: 190px;
+    left: 600px;
 	color: #001020;
 }
 
@@ -4360,4 +4360,8 @@ form div.form-item-quantity{
 
 form div.form-item-quantity input[type="text"]{
 	width: 75px;
+}
+
+form#newsletter-subscribe-form{
+    margin-bottom: 10px;
 }
